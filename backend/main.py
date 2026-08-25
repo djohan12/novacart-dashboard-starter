@@ -141,11 +141,37 @@ def get_summary():
 
     TODO: implement this endpoint.
     Hints:
-      - Use fact_orders table
-      - Filter status IN ('delivered', 'shipped') for revenue
-      - Use MIN/MAX of order_date for date_range
+    - Use fact_orders table
+    - Filter status IN ('delivered', 'shipped') for revenue
+    - Use MIN/MAX of order_date for date_range
     """
+    #query code 
     conn = get_connection()
+    try:
+        results = execute_query(conn, """
+            SELECT
+                COUNT(DISTINCT order_id)    AS total_orders,
+                SUM(amount)                 AS total_revenue,
+                COUNT(DISTINCT customer_id) AS unique_customers,
+                MIN(order_date)             AS start_date,
+                MAX(order_date)             AS end_date
+                FROM fact_orders
+                WHERE status IN ('delivered', 'shipped')
+        """)
+        row = results[0]  
+
+        
+        return {
+            "total_revenue":     round(row["total_revenue"] or 0, 2),
+            "total_orders":      row["total_orders"],
+            "unique_customers":  row["unique_customers"],
+            "date_range": {"start": row["start_date"], "end": row["end_date"]},
+        }
+    except Exception as e:
+        raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail=str(e)
+    )
 
     # ── YOUR CODE HERE ────────────────────────────────────────────────────────
     #
@@ -168,8 +194,6 @@ def get_summary():
     #     "date_range": {"start": row["start_date"], "end": row["end_date"]},
     # }
     # ─────────────────────────────────────────────────────────────────────────
-
-    raise HTTPException(status_code=501, detail="Not implemented yet — your turn!")
 
 
 @app.get("/franchise/orders", tags=["Franchise"])
@@ -196,6 +220,11 @@ def get_orders(start: str = "2022-01-01", end: str = "2022-12-31"):
       - Only include delivered + shipped for revenue
     """
     conn = get_connection()
+    results = execute_query(conn, """
+        SELECT
+
+    """)
+    row = results[0]
 
     # ── YOUR CODE HERE ────────────────────────────────────────────────────────
     raise HTTPException(status_code=501, detail="Not implemented yet — your turn!")
@@ -250,6 +279,7 @@ def get_customers(start: str = "2022-01-01", end: str = "2022-12-31"):
       - ORDER BY total_spent DESC, LIMIT 20
     """
     conn = get_connection()
+    
 
     # ── YOUR CODE HERE ────────────────────────────────────────────────────────
     raise HTTPException(status_code=501, detail="Not implemented yet — your turn!")

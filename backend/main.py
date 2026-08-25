@@ -24,12 +24,16 @@ The connection and query helpers are already set up in connection.py.
 
 import os
 import time
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
 from connection import get_connection, execute_query
+
+#my extra libraries
+from datetime import datetime
+import re
 
 load_dotenv()
 
@@ -169,7 +173,7 @@ def get_summary():
         }
     except Exception as e:
         raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        status_code=500,
         detail=str(e)
     )
 
@@ -195,16 +199,19 @@ def get_summary():
     # }
     # ─────────────────────────────────────────────────────────────────────────
 
-
+# i removed these dates str = "2022-01-01", str = "2022-12-31"
 @app.get("/franchise/orders", tags=["Franchise"])
-def get_orders(start: str = "2022-01-01", end: str = "2022-12-31"):
+def get_orders(
+    start: str = Query(..., description = "Start date in YYYY-MM-DD format"), 
+    end: str = Query(..., description = "End date in YYYY-MM-DD format") 
+    ):
     """
     Returns monthly order volume and revenue for the given date range.
     Used to power the orders overview chart.
 
     Query parameters:
-      start: start date (YYYY-MM-DD)
-      end:   end date (YYYY-MM-DD)
+    start: start date (YYYY-MM-DD)
+    end:   end date (YYYY-MM-DD)
 
     Expected response:
     [
@@ -214,15 +221,67 @@ def get_orders(start: str = "2022-01-01", end: str = "2022-12-31"):
 
     TODO: implement this endpoint.
     Hints:
-      - JOIN fact_orders with dim_date on date_key
-      - GROUP BY year, month, month_name
-      - Filter order_date between start and end
-      - Only include delivered + shipped for revenue
+    - JOIN fact_orders with dim_date on date_key
+    - GROUP BY year, month, month_name
+    - Filter order_date between start and end
+    - Only include delivered + shipped for revenue
     """
-    conn = get_connection()
-    
-    # ── YOUR CODE HERE ────────────────────────────────────────────────────────
-    raise HTTPException(status_code=501, detail="Not implemented yet — your turn!")
+    try:
+        #error checking to check the dates
+        if not validate_date_format(start):
+            raise HTTPException(status_code=400, detail = "Invalid date format. Must be YYYY-MM-DD.")
+        if not validate_date_format(end):
+            raise HTTPException(status_code=400, detail = "Invalid date format. Must be YYYY-MM-DD.")
+        elif start > end:
+            raise HTTPException(status_code=400, detail="Invalid date entry")
+        elif not start:
+            raise HTTPException(status_code=400, detail="Missing start date parameter")
+        elif not end:
+            raise HTTPException(status_code=400, detail="Missing end date parameter")
+        """
+        Hints:
+        - JOIN fact_orders with dim_date on date_key
+        - GROUP BY year, month, month_name
+        - Filter order_date between start and end
+        - Only include delivered + shipped for revenue
+        """
+        conn = get_connection()
+        results = execute_query(conn, """
+            SELECT
+            dim_date.year,
+            dim_date.month,
+            month_name,
+            COUNT(DISTINCT(fact_orders.order_id)) AS order_count,
+            SUM(amount) AS revenue
+            FROM fact_orders 
+            JOIN dim_date ON fact_orders.date_key = dim_date.date_key
+            WHERE fact_orders.order_date >= ? AND fact_orders.order_date <= ?
+                AND fact_orders.status in ('shipped','delivered')
+            GROUP BY dim_date.year, dim_date.month, dim_date.month_name
+            ORDER BY dim_date.year, dim_date.month
+
+        """, (start,end))
+        
+        #print(f"Results count: {len(results)}")  # See how many rows
+        orders = []
+        for row in results:
+            orders.append({
+            "month": f"{row['year']}-{row['month']:02d}",
+            "month_name": row['month_name'],
+            "order_count": row['order_count'],
+            "revenue": row['revenue']
+            })
+
+        #return an json object that is a list of orders
+        return orders
+        
+    #need this so it raises my custom HTTP errors 
+    except HTTPException:
+        raise
+    except Exception as e:
+        #print("Error: {e}")
+        raise HTTPException(status_code= 500, detail="Internal Server Error")
+
 
 
 
@@ -234,7 +293,7 @@ def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
     Expected response:
     [
         { "product_id": "P001", "name": "Wireless Headphones", "category": "Electronics",
-          "units_sold": 342, "revenue": 30578.58 }
+        "units_sold": 342, "revenue": 30578.58 }
     ]
 
     TODO: implement this endpoint.
@@ -313,3 +372,25 @@ def get_cities(start: str = "2022-01-01", end: str = "2022-12-31"):
 
     # ── YOUR CODE HERE ────────────────────────────────────────────────────────
     raise HTTPException(status_code=501, detail="Not implemented yet — your turn!")
+
+
+def validate_date_format(date_string: str) -> bool:
+    # Check pattern: exactly 4 digits, hyphen, 2 digits, hyphen, 2 digits
+    pattern = r'^\d{4}-\d{2}-\d{2}$'
+    print(f"Validating: {date_string}")
+    
+    if not re.match(pattern, date_string):
+        print(f"Pattern match failed for: {date_string}")
+        return False
+    
+    # Also validate it's a real date (not 2022-13-45)
+    try:
+        result = datetime.strptime(date_string, '%Y-%m-%d')
+        print(f"Date validation passed: {result}")
+        return True
+    except ValueError as e:
+        print(f"ValueError: {e}")
+        return False
+    except Exception as e:
+        print(f"Unexpected error: {type(e).__name__}: {e}")
+        return False

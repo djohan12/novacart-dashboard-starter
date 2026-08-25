@@ -24,6 +24,8 @@ The connection and query helpers are already set up in connection.py.
 
 import os
 import time
+from datetime import datetime
+from tracemalloc import start
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -95,6 +97,13 @@ def health():
         "backend":  os.getenv("DATA_BACKEND", "sqlite"),
         "database": {"status": "connected"},
     }
+
+def is_valid_date(date):
+    try:
+        datetime.strptime(date, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
@@ -243,15 +252,19 @@ def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
       - GROUP BY product_id, name, category
       - ORDER BY revenue DESC, LIMIT 10
     """
+
+    if not start or not end:
+        raise HTTPException(status_code=400, detail="Missing start or end date")
+    if not is_valid_date(start) or not is_valid_date(end):
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    if start > end:
+        raise HTTPException(status_code=400, detail="Start date must be before end date")
+
     try:
         conn = get_connection()
         results = execute_query(conn, """
-            SELECT
-                p.product_id,
-                p.name,
-                p.category,
-                SUM(o.quantity) AS units_sold,
-                SUM(o.amount) AS revenue
+            SELECT p.product_id, p.name, p.category,
+                SUM(o.quantity) AS units_sold, SUM(o.amount) AS revenue
             FROM fact_orders o
             JOIN dim_product p 
                 ON o.product_id = p.product_id
@@ -285,11 +298,32 @@ def get_customers(start: str = "2022-01-01", end: str = "2022-12-31"):
       - GROUP BY customer_id, name, addr_city, addr_state
       - ORDER BY total_spent DESC, LIMIT 20
     """
-    conn = get_connection()
-    
+    if not start or not end:
+        raise HTTPException(status_code=400, detail="Missing start or end date")
+    if not is_valid_date(start) or not is_valid_date(end):
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    if start > end:
+        raise HTTPException(status_code=400, detail="Start date must be before end date")
 
-    # ── YOUR CODE HERE ────────────────────────────────────────────────────────
-    raise HTTPException(status_code=501, detail="Not implemented yet — your turn!")
+    try:
+        conn = get_connection()
+        results = execute_query(conn, """
+            SELECT c.customer_id, c.name, c.addr_city AS city, c.addr_state AS state,
+                    COUNT(o.order_id) AS total_orders, SUM(o.amount) AS total_spent
+            FROM fact_orders o
+            JOIN dim_customer c ON o.customer_id = c.customer_id
+            WHERE c.is_current = 1 AND o.order_date >= ? AND o.order_date <= ?
+            GROUP BY c.customer_id, c.name, c.addr_city, c.addr_state
+            ORDER BY total_spent DESC
+            LIMIT 20              
+        """, (start, end))
+        return results
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
 
 
 @app.get("/franchise/cities", tags=["Franchise"])

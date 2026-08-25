@@ -219,9 +219,16 @@ def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
       - ORDER BY revenue DESC, LIMIT 10
     """
     conn = get_connection()
-
-    # ── YOUR CODE HERE ────────────────────────────────────────────────────────
-    raise HTTPException(status_code=501, detail="Not implemented yet — your turn!")
+    results = execute_query(conn, """
+        SELECT p.product_id, p.name, p.category
+        FROM fact_orders o
+        JOIN dim_product p 
+            ON o.product_id = p.product_id
+        WHERE o.order_date >= ? AND o.order_date <= ?
+        GROUP BY p.product_id, p.name, p.category
+        ORDER BY SUM(o.amount) DESC LIMIT 10
+    """, (start, end))
+    raise HTTPException(status_code=200, detail=results)
 
 
 @app.get("/franchise/customers", tags=["Franchise"])

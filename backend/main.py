@@ -24,7 +24,7 @@ The connection and query helpers are already set up in connection.py.
 
 import os
 import time
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
@@ -220,16 +220,10 @@ def get_orders(start: str = "2022-01-01", end: str = "2022-12-31"):
       - Only include delivered + shipped for revenue
     """
     conn = get_connection()
-    results = execute_query(conn, """
-        SELECT p.product_id, p.name, p.category
-        FROM fact_orders o
-        JOIN dim_product p 
-            ON o.product_id = p.product_id
-        WHERE o.order_date >= ? AND o.order_date <= ?
-        GROUP BY p.product_id, p.name, p.category
-        ORDER BY SUM(o.amount) DESC LIMIT 10
-    """, (start, end))
-    raise HTTPException(status_code=200, detail=results)
+    
+    # ── YOUR CODE HERE ────────────────────────────────────────────────────────
+    raise HTTPException(status_code=501, detail="Not implemented yet — your turn!")
+
 
 
 @app.get("/franchise/products", tags=["Franchise"])
@@ -249,17 +243,28 @@ def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
       - GROUP BY product_id, name, category
       - ORDER BY revenue DESC, LIMIT 10
     """
-    conn = get_connection()
-    results = execute_query(conn, """
-        SELECT p.product_id, p.name, p.category
-        FROM fact_orders o
-        JOIN dim_product p 
-            ON o.product_id = p.product_id
-        WHERE o.order_date >= ? AND o.order_date <= ?
-        GROUP BY p.product_id, p.name, p.category
-        ORDER BY SUM(o.amount) DESC LIMIT 10
-    """, (start, end))
-    raise HTTPException(status_code=200, detail=results)
+    try:
+        conn = get_connection()
+        results = execute_query(conn, """
+            SELECT
+                p.product_id,
+                p.name,
+                p.category,
+                SUM(o.quantity) AS units_sold,
+                SUM(o.amount) AS revenue
+            FROM fact_orders o
+            JOIN dim_product p 
+                ON o.product_id = p.product_id
+            WHERE o.order_date >= ? AND o.order_date <= ?
+            GROUP BY p.product_id, p.name, p.category
+            ORDER BY revenue DESC LIMIT 10
+        """, (start, end))
+        return results
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
 
 
 @app.get("/franchise/customers", tags=["Franchise"])

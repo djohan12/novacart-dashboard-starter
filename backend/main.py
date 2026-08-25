@@ -32,7 +32,8 @@ from dotenv import load_dotenv
 from connection import get_connection, execute_query
 
 #my extra libraries
-from datetime import date
+from datetime import datetime
+import re
 
 load_dotenv()
 
@@ -226,8 +227,12 @@ def get_orders(
     - Only include delivered + shipped for revenue
     """
     try:
-        #error checking to check the dates 
-        if start > end:
+        #error checking to check the dates
+        if not validate_date_format(start):
+            raise HTTPException(status_code=400, detail = "Invalid date format. Must be YYYY-MM-DD.")
+        if not validate_date_format(end):
+            raise HTTPException(status_code=400, detail = "Invalid date format. Must be YYYY-MM-DD.")
+        elif start > end:
             raise HTTPException(status_code=400, detail="Invalid date entry")
         elif not start:
             raise HTTPException(status_code=400, detail="Missing start date parameter")
@@ -269,7 +274,10 @@ def get_orders(
 
         #return an json object that is a list of orders
         return orders
-
+        
+    #need this so it raises my custom HTTP errors 
+    except HTTPException:
+        raise
     except Exception as e:
         #print("Error: {e}")
         raise HTTPException(status_code= 500, detail="Internal Server Error")
@@ -345,3 +353,25 @@ def get_cities(start: str = "2022-01-01", end: str = "2022-12-31"):
 
     # ── YOUR CODE HERE ────────────────────────────────────────────────────────
     raise HTTPException(status_code=501, detail="Not implemented yet — your turn!")
+
+
+def validate_date_format(date_string: str) -> bool:
+    # Check pattern: exactly 4 digits, hyphen, 2 digits, hyphen, 2 digits
+    pattern = r'^\d{4}-\d{2}-\d{2}$'
+    print(f"Validating: {date_string}")
+    
+    if not re.match(pattern, date_string):
+        print(f"Pattern match failed for: {date_string}")
+        return False
+    
+    # Also validate it's a real date (not 2022-13-45)
+    try:
+        result = datetime.strptime(date_string, '%Y-%m-%d')
+        print(f"Date validation passed: {result}")
+        return True
+    except ValueError as e:
+        print(f"ValueError: {e}")
+        return False
+    except Exception as e:
+        print(f"Unexpected error: {type(e).__name__}: {e}")
+        return False

@@ -309,7 +309,7 @@ def get_customers(start: str = "2022-01-01", end: str = "2022-12-31"):
         conn = get_connection()
         results = execute_query(conn, """
             SELECT c.customer_id, c.name, c.addr_city AS city, c.addr_state AS state,
-                    COUNT(o.order_id) AS total_orders, SUM(o.amount) AS total_spent
+                    COUNT(DISTINCT o.order_id) AS total_orders, SUM(o.amount) AS total_spent
             FROM fact_orders o
             JOIN dim_customer c ON o.customer_id = c.customer_id
             WHERE c.is_current = 1 AND o.order_date >= ? AND o.order_date <= ?

@@ -24,12 +24,15 @@ The connection and query helpers are already set up in connection.py.
 
 import os
 import time
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
 from connection import get_connection, execute_query
+
+#my extra libraries
+from datetime import date
 
 load_dotenv()
 
@@ -169,7 +172,7 @@ def get_summary():
         }
     except Exception as e:
         raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        status_code=500,
         detail=str(e)
     )
 
@@ -195,16 +198,19 @@ def get_summary():
     # }
     # ─────────────────────────────────────────────────────────────────────────
 
-
+# i removed these dates str = "2022-01-01", str = "2022-12-31"
 @app.get("/franchise/orders", tags=["Franchise"])
-def get_orders(start: str = "2022-01-01", end: str = "2022-12-31"):
+def get_orders(
+    start: str = Query(..., description = "Start date in YYYY-MM-DD format"), 
+    end: str = Query(..., description = "End date in YYYY-MM-DD format") 
+    ):
     """
     Returns monthly order volume and revenue for the given date range.
     Used to power the orders overview chart.
 
     Query parameters:
-      start: start date (YYYY-MM-DD)
-      end:   end date (YYYY-MM-DD)
+    start: start date (YYYY-MM-DD)
+    end:   end date (YYYY-MM-DD)
 
     Expected response:
     [
@@ -214,20 +220,60 @@ def get_orders(start: str = "2022-01-01", end: str = "2022-12-31"):
 
     TODO: implement this endpoint.
     Hints:
-      - JOIN fact_orders with dim_date on date_key
-      - GROUP BY year, month, month_name
-      - Filter order_date between start and end
-      - Only include delivered + shipped for revenue
+    - JOIN fact_orders with dim_date on date_key
+    - GROUP BY year, month, month_name
+    - Filter order_date between start and end
+    - Only include delivered + shipped for revenue
     """
-    conn = get_connection()
-    results = execute_query(conn, """
-        SELECT
+    try:
+        #error checking to check the dates 
+        if start > end:
+            raise HTTPException(status_code=400, detail="Invalid date entry")
+        elif not start:
+            raise HTTPException(status_code=400, detail="Missing start date parameter")
+        elif not end:
+            raise HTTPException(status_code=400, detail="Missing end date parameter")
+        """
+        Hints:
+        - JOIN fact_orders with dim_date on date_key
+        - GROUP BY year, month, month_name
+        - Filter order_date between start and end
+        - Only include delivered + shipped for revenue
+        """
+        conn = get_connection()
+        results = execute_query(conn, """
+            SELECT
+            dim_date.year,
+            dim_date.month,
+            month_name,
+            COUNT(DISTINCT(fact_orders.order_id)) AS order_count,
+            SUM(amount) AS revenue
+            FROM fact_orders 
+            JOIN dim_date ON fact_orders.date_key = dim_date.date_key
+            WHERE fact_orders.order_date >= ? AND fact_orders.order_date <= ?
+                AND fact_orders.status in ('shipped','delivered')
+            GROUP BY dim_date.year, dim_date.month, dim_date.month_name
+            ORDER BY dim_date.year, dim_date.month
 
-    """)
-    row = results[0]
+        """, (start,end))
+        
+        #print(f"Results count: {len(results)}")  # See how many rows
+        orders = []
+        for row in results:
+            orders.append({
+            "month": f"{row['year']}-{row['month']:02d}",
+            "month_name": row['month_name'],
+            "order_count": row['order_count'],
+            "revenue": row['revenue']
+            })
 
-    # ── YOUR CODE HERE ────────────────────────────────────────────────────────
-    raise HTTPException(status_code=501, detail="Not implemented yet — your turn!")
+        #return an json object that is a list of orders
+        return orders
+
+    except Exception as e:
+        #print("Error: {e}")
+        raise HTTPException(status_code= 500, detail="Internal Server Error")
+
 
 
 @app.get("/franchise/products", tags=["Franchise"])
@@ -238,7 +284,7 @@ def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
     Expected response:
     [
         { "product_id": "P001", "name": "Wireless Headphones", "category": "Electronics",
-          "units_sold": 342, "revenue": 30578.58 }
+        "units_sold": 342, "revenue": 30578.58 }
     ]
 
     TODO: implement this endpoint.

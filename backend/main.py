@@ -284,6 +284,7 @@ def get_orders(
 
 
 
+
 @app.get("/franchise/products", tags=["Franchise"])
 def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
     """
@@ -301,10 +302,28 @@ def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
       - GROUP BY product_id, name, category
       - ORDER BY revenue DESC, LIMIT 10
     """
-    conn = get_connection()
-
-    # ── YOUR CODE HERE ────────────────────────────────────────────────────────
-    raise HTTPException(status_code=501, detail="Not implemented yet — your turn!")
+    try:
+        conn = get_connection()
+        results = execute_query(conn, """
+            SELECT
+                p.product_id,
+                p.name,
+                p.category,
+                SUM(o.quantity) AS units_sold,
+                SUM(o.amount) AS revenue
+            FROM fact_orders o
+            JOIN dim_product p 
+                ON o.product_id = p.product_id
+            WHERE o.order_date >= ? AND o.order_date <= ?
+            GROUP BY p.product_id, p.name, p.category
+            ORDER BY revenue DESC LIMIT 10
+        """, (start, end))
+        return results
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
 
 
 @app.get("/franchise/customers", tags=["Franchise"])

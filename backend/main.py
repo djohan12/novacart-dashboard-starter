@@ -26,7 +26,7 @@ import os
 import time
 from datetime import datetime
 from tracemalloc import start
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, HTTPException, Request, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
@@ -210,8 +210,7 @@ def get_summary():
 
 # i removed these dates str = "2022-01-01", str = "2022-12-31"
 @app.get("/franchise/orders", tags=["Franchise"])
-def get_orders(
-    start: str = Query(..., description = "Start date in YYYY-MM-DD format"), 
+def get_orders(start: str = Query(..., description = "Start date in YYYY-MM-DD format"), 
     end: str = Query(..., description = "End date in YYYY-MM-DD format") 
     ):
     """
@@ -235,25 +234,15 @@ def get_orders(
     - Filter order_date between start and end
     - Only include delivered + shipped for revenue
     """
+    if not validate_date_format(start):
+        raise HTTPException(status_code=400, detail = "Invalid date format. Must be YYYY-MM-DD.")
+    if not validate_date_format(end):
+        raise HTTPException(status_code=400, detail = "Invalid date format. Must be YYYY-MM-DD.")
+    elif start > end:
+        raise HTTPException(status_code=400, detail="Invalid date entry")
+  
     try:
         #error checking to check the dates
-        if not validate_date_format(start):
-            raise HTTPException(status_code=400, detail = "Invalid date format. Must be YYYY-MM-DD.")
-        if not validate_date_format(end):
-            raise HTTPException(status_code=400, detail = "Invalid date format. Must be YYYY-MM-DD.")
-        elif start > end:
-            raise HTTPException(status_code=400, detail="Invalid date entry")
-        elif not start:
-            raise HTTPException(status_code=400, detail="Missing start date parameter")
-        elif not end:
-            raise HTTPException(status_code=400, detail="Missing end date parameter")
-        """
-        Hints:
-        - JOIN fact_orders with dim_date on date_key
-        - GROUP BY year, month, month_name
-        - Filter order_date between start and end
-        - Only include delivered + shipped for revenue
-        """
         conn = get_connection()
         results = execute_query(conn, """
             SELECT
@@ -280,13 +269,9 @@ def get_orders(
             "order_count": row['order_count'],
             "revenue": row['revenue']
             })
-
         #return an json object that is a list of orders
         return orders
         
-    #need this so it raises my custom HTTP errors 
-    except HTTPException:
-        raise
     except Exception as e:
         #print("Error: {e}")
         raise HTTPException(status_code= 500, detail="Internal Server Error")
@@ -332,6 +317,7 @@ def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
             ORDER BY revenue DESC LIMIT 10
         """, (start, end))
         return results
+    
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -386,7 +372,8 @@ def get_customers(start: str = "2022-01-01", end: str = "2022-12-31"):
 
 
 @app.get("/franchise/cities", tags=["Franchise"])
-def get_cities(start: str = "2022-01-01", end: str = "2022-12-31"):
+def get_cities(start: str = Query(..., description = "Start date in YYYY-MM-DD format"), 
+    end: str = Query(..., description = "End date in YYYY-MM-DD format")):
     """
     Returns revenue grouped by city and state.
     Used to power the geographic breakdown chart.
@@ -402,11 +389,44 @@ def get_cities(start: str = "2022-01-01", end: str = "2022-12-31"):
       - GROUP BY addr_city, addr_state
       - ORDER BY revenue DESC
     """
-    conn = get_connection()
+    if not validate_date_format(start):
+        raise HTTPException(status_code=400, detail = "Invalid date format. Must be YYYY-MM-DD.")
+    if not validate_date_format(end):
+        raise HTTPException(status_code=400, detail = "Invalid date format. Must be YYYY-MM-DD.")
+    elif start > end:
+        raise HTTPException(status_code=400, detail="Invalid date entry")
 
-    # ── YOUR CODE HERE ────────────────────────────────────────────────────────
-    raise HTTPException(status_code=501, detail="Not implemented yet — your turn!")
+    try:
+        conn = get_connection()
+        results = execute_query(conn, """
+        SELECT 
+            dim_customer.addr_city, 
+            dim_customer.addr_state,
+            COUNT(DISTINCT fact_orders.order_id) AS order_count,
+            SUM(fact_orders.amount) AS revenue
+            FROM fact_orders
+            JOIN dim_customer ON dim_customer.customer_id = fact_orders.customer_id
+            WHERE fact_orders.status IN ('shipped','delivered') 
+                AND fact_orders.order_date >= ? 
+                AND fact_orders.order_date <= ? 
+                AND dim_customer.is_current = 1
+                GROUP BY dim_customer.addr_city, dim_customer.addr_state
+            ORDER BY revenue DESC         
+        """, (start, end))
 
+        cities = []
+        for row in results:
+            cities.append({
+                "city": row['addr_city'],
+                "state": row['addr_state'],
+                "order_count": row['order_count'],
+                "revenue": row['revenue']
+            })
+        return cities 
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal Service Error")
+    
 
 def validate_date_format(date_string: str) -> bool:
     # Check pattern: exactly 4 digits, hyphen, 2 digits, hyphen, 2 digits

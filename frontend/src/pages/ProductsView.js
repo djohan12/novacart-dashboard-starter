@@ -13,7 +13,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import Navbar from '../components/Navbar';
-import { getProducts } from '../utils/api';
+import { getProducts, getMinMaxDateRange } from '../utils/api';
 
 // Format currency helper
 function formatCurrency(value) {
@@ -29,6 +29,8 @@ export default function ProductsView() {
   const [products,  setProducts]  = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState(null);
+  const [minDate, setMinDate] = useState(null);
+  const [maxDate, setMaxDate] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -37,6 +39,10 @@ export default function ProductsView() {
     setError(null);
     try {
       const data = await getProducts(startDate, endDate);
+      const dateRange = await getMinMaxDateRange();
+      setMinDate(dateRange["min_date"])
+      setMaxDate(dateRange["max_date"])
+
       setProducts(data);
     } catch (err) {
       setError(err.message);
@@ -52,9 +58,9 @@ export default function ProductsView() {
 
         <div className="filter-bar">
           <label>From</label>
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} min = {minDate} max = {maxDate} />
           <label>To</label>
-          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} min = {minDate} max = {maxDate} />
           <button className="btn-apply" onClick={loadData}>Apply</button>
         </div>
 

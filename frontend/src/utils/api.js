@@ -18,6 +18,7 @@ async function apiFetch(path) {
   return res.json();
 }
 
+
 export async function authorize()       { return apiFetch('/authorize'); }
 export async function getHealth()       { return apiFetch('/health'); }
 export async function getSummary()      { return apiFetch('/franchise/summary'); }

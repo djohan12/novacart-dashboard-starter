@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import { getCustomers } from '../utils/api';
+import { getCustomers, getMinMaxDateRange} from '../utils/api';
 
 function formatCurrency(value) {
   if (!value) return '$0';
@@ -27,6 +27,8 @@ export default function CustomersView() {
   const [sortDir,    setSortDir]    = useState('desc');
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState(null);
+  const [minDate, setMinDate] = useState(null);
+  const [maxDate, setMaxDate] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -35,6 +37,10 @@ export default function CustomersView() {
     setError(null);
     try {
       const data = await getCustomers(startDate, endDate);
+      const dateRange = await getMinMaxDateRange();
+      setMinDate(dateRange["min_date"])
+      setMaxDate(dateRange["max_date"])
+
       setCustomers(data);
     } catch (err) {
       setError(err.message);
@@ -110,14 +116,28 @@ export default function CustomersView() {
               Format total_spent with formatCurrency().
             */}
 
-            {/* TODO: add your sortable table here */}
-            <div className="loading" style={{ height: 400 }}>
-              Implement the sortable customers table.
-              Data available in: sorted (array of customer objects)
-              Sorting state: sortBy="{sortBy}", sortDir="{sortDir}"
-              Use handleSort(column) to handle header clicks.
-            </div>
-
+            <table>
+              <thead>
+                <tr>
+                  <th onClick={() => handleSort('name')}>Name{sortIcon('name')}</th>
+                  <th onClick={() => handleSort('city')}>City{sortIcon('city')}</th>
+                  <th onClick={() => handleSort('state')}>State{sortIcon('state')}</th>
+                  <th onClick={() => handleSort('total_orders')}>Orders{sortIcon('total_orders')}</th>
+                  <th onClick={() => handleSort('total_spent')}>Total Spent{sortIcon('total_spent')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((customer, index) => (
+                  <tr key={customer.customer_id} style={{ backgroundColor: index % 2 === 0 ? 'var(--bg-secondary)' : 'var(--bg-primary)' }}>
+                    <td>{customer.name}</td>
+                    <td>{customer.city}</td>
+                    <td>{customer.state}</td>
+                    <td>{customer.total_orders}</td>
+                    <td>{formatCurrency(customer.total_spent)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

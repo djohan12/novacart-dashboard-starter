@@ -13,7 +13,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import Navbar from '../components/Navbar';
-import { getProducts } from '../utils/api';
+import { getProducts, getMinMaxDateRange } from '../utils/api';
 
 // Format currency helper
 function formatCurrency(value) {
@@ -29,6 +29,8 @@ export default function ProductsView() {
   const [products,  setProducts]  = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState(null);
+  const [minDate, setMinDate] = useState(null);
+  const [maxDate, setMaxDate] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -37,6 +39,10 @@ export default function ProductsView() {
     setError(null);
     try {
       const data = await getProducts(startDate, endDate);
+      const dateRange = await getMinMaxDateRange();
+      setMinDate(dateRange["min_date"])
+      setMaxDate(dateRange["max_date"])
+
       setProducts(data);
     } catch (err) {
       setError(err.message);
@@ -52,9 +58,9 @@ export default function ProductsView() {
 
         <div className="filter-bar">
           <label>From</label>
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} min = {minDate} max = {maxDate} />
           <label>To</label>
-          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} min = {minDate} max = {maxDate} />
           <button className="btn-apply" onClick={loadData}>Apply</button>
         </div>
 
@@ -79,9 +85,14 @@ export default function ProductsView() {
             <div className="card">
               <div className="section-title" style={{ marginBottom: 16 }}>Top 10 Products by Revenue</div>
               {/* TODO: add your bar chart here */}
-              <div className="loading" style={{ height: 300 }}>
-                Implement the products bar chart
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                  <BarChart layout="vertical" data={products}>
+                    <XAxis type="number" />
+                    <YAxis type="category" dataKey="name" width={200} tickFormatter={(value) => value.length > 25 ? value.substring(0, 20) + '...' : value}/>
+                    <Tooltip formatter={(value) => formatCurrency(value)} />
+                    <Bar dataKey="revenue" fill="#1976D2" />
+                  </BarChart>
+              </ResponsiveContainer>
             </div>
 
             {/*
@@ -93,9 +104,26 @@ export default function ProductsView() {
             <div className="card">
               <div className="section-title" style={{ marginBottom: 16 }}>Product Details</div>
               {/* TODO: add your table here */}
-              <div className="loading" style={{ height: 300 }}>
-                Implement the products table
-              </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid #ccc' }}>
+                    <th style={{ textAlign: 'left', padding: 12, fontWeight: 600 }}>Name</th>
+                    <th style={{ textAlign: 'left', padding: 12, fontWeight: 600 }}>Category</th>
+                    <th style={{ textAlign: 'right', padding: 12, fontWeight: 600 }}>Units Sold</th>
+                    <th style={{ textAlign: 'right', padding: 12, fontWeight: 600 }}>Revenue</th>
+                    </tr>
+                    </thead>
+              <tbody>
+                {products.map((product) => (
+                <tr key={product.product_id} style={{ borderBottom: '1px solid #eee' }}>
+                <td style={{ padding: 12 }}>{product.name}</td>
+                <td style={{ padding: 12 }}>{product.category}</td>
+                <td style={{ textAlign: 'right', padding: 12 }}>{product.units_sold}</td>
+                <td style={{ textAlign: 'right', padding: 12 }}>{formatCurrency(product.revenue)}</td>
+                </tr>
+              ))}
+              </tbody>
+              </table>
             </div>
 
           </div>

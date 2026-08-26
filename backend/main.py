@@ -285,9 +285,9 @@ def get_orders(start: str = Query(..., description = "Start date in YYYY-MM-DD f
 
 
 
-
 @app.get("/franchise/products", tags=["Franchise"])
-def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
+def get_products(start: str = Query(..., description = "Start date in YYYY-MM-DD format"), 
+    end: str = Query(..., description = "End date in YYYY-MM-DD format")):
     """
     Returns the top 10 products by revenue for the given date range.
 
@@ -303,27 +303,30 @@ def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
       - GROUP BY product_id, name, category
       - ORDER BY revenue DESC, LIMIT 10
     """
-
-    if not start or not end:
-        raise HTTPException(status_code=400, detail="Missing start or end date")
-    if not is_valid_date(start) or not is_valid_date(end):
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
     if start > end:
         raise HTTPException(status_code=400, detail="Start date must be before end date")
+    elif not is_valid_date(start) or not is_valid_date(end):
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD with valid dates")
 
     try:
         conn = get_connection()
+
+
         results = execute_query(conn, """
             SELECT p.product_id, p.name, p.category,
                 SUM(o.quantity) AS units_sold, SUM(o.amount) AS revenue
             FROM fact_orders o
             JOIN dim_product p 
                 ON o.product_id = p.product_id
-            WHERE o.order_date >= ? AND o.order_date <= ?
+            WHERE o.order_date >= ? AND o.order_date <= ? AND 
+            o.status IN ('delivered', 'shipped')
             GROUP BY p.product_id, p.name, p.category
             ORDER BY revenue DESC LIMIT 10
         """, (start, end))
         return results
+    except HTTPException:
+        raise
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -335,7 +338,8 @@ def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
 
    
 @app.get("/franchise/customers", tags=["Franchise"])
-def get_customers(start: str = "2022-01-01", end: str = "2022-12-31"):
+def get_customers(start: str = Query(..., description = "Start date in YYYY-MM-DD format"), 
+    end: str = Query(..., description = "End date in YYYY-MM-DD format")):
     """
     Returns the top 20 customers by revenue for the given date range.
 
@@ -352,12 +356,10 @@ def get_customers(start: str = "2022-01-01", end: str = "2022-12-31"):
       - GROUP BY customer_id, name, addr_city, addr_state
       - ORDER BY total_spent DESC, LIMIT 20
     """
-    if not start or not end:
-        raise HTTPException(status_code=400, detail="Missing start or end date")
-    if not is_valid_date(start) or not is_valid_date(end):
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
     if start > end:
         raise HTTPException(status_code=400, detail="Start date must be before end date")
+    elif not is_valid_date(start) or not is_valid_date(end):
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD with valid dates")
 
     try:
         conn = get_connection()
@@ -464,3 +466,23 @@ def validate_date_format(date_string: str) -> bool:
     except Exception as e:
         print(f"Unexpected error: {type(e).__name__}: {e}")
         return False
+
+@app.get("/minmax_daterange", tags = ["Franchise"])
+def get_data_date_range():
+    conn = get_connection()
+    date_range = execute_query(conn, """ 
+            SELECT MAX(order_date) as end_range,
+            MIN(order_date) as start_range
+            FROM fact_orders WHERE status IN ('delivered', 'shipped')
+        """)
+
+    minDate = ""
+    maxDate = ""
+    for row in date_range:
+        minDate = row['start_range']
+        maxDate = row['end_range']
+    
+    conn.close()
+
+    return {"min_date": minDate,
+            "max_date": maxDate }

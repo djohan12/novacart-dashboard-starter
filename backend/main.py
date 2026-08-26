@@ -333,7 +333,8 @@ def get_products(start: str = Query(..., description = "Start date in YYYY-MM-DD
 
    
 @app.get("/franchise/customers", tags=["Franchise"])
-def get_customers(start: str = "2022-01-01", end: str = "2022-12-31"):
+def get_customers(start: str = Query(..., description = "Start date in YYYY-MM-DD format"), 
+    end: str = Query(..., description = "End date in YYYY-MM-DD format")):
     """
     Returns the top 20 customers by revenue for the given date range.
 
@@ -350,12 +351,10 @@ def get_customers(start: str = "2022-01-01", end: str = "2022-12-31"):
       - GROUP BY customer_id, name, addr_city, addr_state
       - ORDER BY total_spent DESC, LIMIT 20
     """
-    if not start or not end:
-        raise HTTPException(status_code=400, detail="Missing start or end date")
-    if not is_valid_date(start) or not is_valid_date(end):
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
     if start > end:
         raise HTTPException(status_code=400, detail="Start date must be before end date")
+    elif not is_valid_date(start) or not is_valid_date(end):
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD with valid dates")
 
     try:
         conn = get_connection()

@@ -110,7 +110,29 @@ export default function CustomersView() {
               Format total_spent with formatCurrency().
             */}
 
-            {/* TODO: add your sortable table here */}
+            <table>
+              <thead>
+                <tr>
+                  <th onClick={() => handleSort('name')}>Name{sortIcon('name')}</th>
+                  <th onClick={() => handleSort('city')}>City{sortIcon('city')}</th>
+                  <th onClick={() => handleSort('state')}>State{sortIcon('state')}</th>
+                  <th onClick={() => handleSort('total_orders')}>Orders{sortIcon('total_orders')}</th>
+                  <th onClick={() => handleSort('total_spent')}>Total Spent{sortIcon('total_spent')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((customer, index) => (
+                  <tr key={customer.customer_id} style={{ backgroundColor: index % 2 === 0 ? 'var(--bg-secondary)' : 'var(--bg-primary)' }}>
+                    <td>{customer.name}</td>
+                    <td>{customer.city}</td>
+                    <td>{customer.state}</td>
+                    <td>{customer.total_orders}</td>
+                    <td>{formatCurrency(customer.total_spent)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
             <div className="loading" style={{ height: 400 }}>
               Implement the sortable customers table.
               Data available in: sorted (array of customer objects)

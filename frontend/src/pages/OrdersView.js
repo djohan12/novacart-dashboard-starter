@@ -113,7 +113,7 @@ export default function OrdersView() {
             <div className="card" style={{ marginBottom: 20 }}>
               <div className="section-title" style={{ marginBottom: 16 }}>Monthly Revenue</div>
               {/* TODO: add your chart here */}
-                <BarChart width={600} height={300} data={orders}>
+                <BarChart width={1100} height={300} data={orders}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month_name" />
                   <YAxis />
@@ -132,7 +132,7 @@ export default function OrdersView() {
             <div className="card">
               <div className="section-title" style={{ marginBottom: 16 }}>Revenue by City</div>
               {/* TODO: add your chart here */}
-                <BarChart width={600} height={300} data={cities.slice(0, 10)} layout="vertical">
+                <BarChart width={1100} height={600} data={cities.slice(0, 10)} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
                   <YAxis type="category" dataKey="city" />

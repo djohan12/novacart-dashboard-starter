@@ -180,14 +180,15 @@ def get_summary():
             "unique_customers":  row["unique_customers"],
             "date_range": {"start": row["start_date"], "end": row["end_date"]},
         }
-
-    finally:
-        conn.close()
     except Exception as e:
         raise HTTPException(
         status_code=500,
         detail=str(e)
     )
+
+    finally:
+        conn.close()
+
 
     # ── YOUR CODE HERE ────────────────────────────────────────────────────────
     #
@@ -274,12 +275,13 @@ def get_orders(start: str = Query(..., description = "Start date in YYYY-MM-DD f
             })
         #return an json object that is a list of orders
         return orders
-    finally:
-        conn.close()
 
     except Exception as e:
         #print("Error: {e}")
         raise HTTPException(status_code= 500, detail="Internal Server Error")
+
+    finally:
+        conn.close()
 
 
 
@@ -322,16 +324,16 @@ def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
             ORDER BY revenue DESC LIMIT 10
         """, (start, end))
         return results
-    finally:
-        conn.close()
-
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
 
+    finally:
+        conn.close()
 
+   
 @app.get("/franchise/customers", tags=["Franchise"])
 def get_customers(start: str = "2022-01-01", end: str = "2022-12-31"):
     """
@@ -370,15 +372,16 @@ def get_customers(start: str = "2022-01-01", end: str = "2022-12-31"):
             LIMIT 20              
         """, (start, end))
         return results
-    finally:
-        conn.close()
-
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
 
+    finally:
+        conn.close()
+
+    
 
 @app.get("/franchise/cities", tags=["Franchise"])
 def get_cities(start: str = Query(..., description = "Start date in YYYY-MM-DD format"), 
@@ -432,11 +435,13 @@ def get_cities(start: str = Query(..., description = "Start date in YYYY-MM-DD f
                 "revenue": row['revenue']
             })
         return cities 
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal Service Error")
+    
     finally:
         conn.close()
         
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal Service Error")
     
 
 def validate_date_format(date_string: str) -> bool:

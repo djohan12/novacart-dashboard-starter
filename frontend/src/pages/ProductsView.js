@@ -79,9 +79,14 @@ export default function ProductsView() {
             <div className="card">
               <div className="section-title" style={{ marginBottom: 16 }}>Top 10 Products by Revenue</div>
               {/* TODO: add your bar chart here */}
-              <div className="loading" style={{ height: 300 }}>
-                Implement the products bar chart
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                  <BarChart layout="vertical" data={products}>
+                    <XAxis type="number" />
+                    <YAxis type="category" dataKey="name" width={150} tickFormatter={(value) => value.length > 20 ? value.substring(0, 20) + '...' : value}/>
+                    <Tooltip formatter={(value) => formatCurrency(value)} />
+                    <Bar dataKey="revenue" fill="#1976D2" />
+                  </BarChart>
+              </ResponsiveContainer>
             </div>
 
             {/*
@@ -93,9 +98,26 @@ export default function ProductsView() {
             <div className="card">
               <div className="section-title" style={{ marginBottom: 16 }}>Product Details</div>
               {/* TODO: add your table here */}
-              <div className="loading" style={{ height: 300 }}>
-                Implement the products table
-              </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid #ccc' }}>
+                    <th style={{ textAlign: 'left', padding: 12, fontWeight: 600 }}>Name</th>
+                    <th style={{ textAlign: 'left', padding: 12, fontWeight: 600 }}>Category</th>
+                    <th style={{ textAlign: 'right', padding: 12, fontWeight: 600 }}>Units Sold</th>
+                    <th style={{ textAlign: 'right', padding: 12, fontWeight: 600 }}>Revenue</th>
+                    </tr>
+                    </thead>
+              <tbody>
+                {products.map((product) => (
+                <tr key={product.product_id} style={{ borderBottom: '1px solid #eee' }}>
+                <td style={{ padding: 12 }}>{product.name}</td>
+                <td style={{ padding: 12 }}>{product.category}</td>
+                <td style={{ textAlign: 'right', padding: 12 }}>{product.units_sold}</td>
+                <td style={{ textAlign: 'right', padding: 12 }}>{formatCurrency(product.revenue)}</td>
+                </tr>
+              ))}
+              </tbody>
+              </table>
             </div>
 
           </div>

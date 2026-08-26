@@ -285,9 +285,9 @@ def get_orders(start: str = Query(..., description = "Start date in YYYY-MM-DD f
 
 
 
-
 @app.get("/franchise/products", tags=["Franchise"])
-def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
+def get_products(start: str = Query(..., description = "Start date in YYYY-MM-DD format"), 
+    end: str = Query(..., description = "End date in YYYY-MM-DD format")):
     """
     Returns the top 10 products by revenue for the given date range.
 
@@ -319,7 +319,8 @@ def get_products(start: str = "2022-01-01", end: str = "2022-12-31"):
             FROM fact_orders o
             JOIN dim_product p 
                 ON o.product_id = p.product_id
-            WHERE o.order_date >= ? AND o.order_date <= ?
+            WHERE o.order_date >= ? AND o.order_date <= ? AND 
+            o.status IN ('delivered', 'shipped')
             GROUP BY p.product_id, p.name, p.category
             ORDER BY revenue DESC LIMIT 10
         """, (start, end))

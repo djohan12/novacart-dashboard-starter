@@ -82,7 +82,7 @@ export default function ProductsView() {
               <ResponsiveContainer width="100%" height={300}>
                   <BarChart layout="vertical" data={products}>
                     <XAxis type="number" />
-                    <YAxis type="category" dataKey="name" width={150} tickFormatter={(value) => value.length > 20 ? value.substring(0, 20) + '...' : value}/>
+                    <YAxis type="category" dataKey="name" width={200} tickFormatter={(value) => value.length > 25 ? value.substring(0, 20) + '...' : value}/>
                     <Tooltip formatter={(value) => formatCurrency(value)} />
                     <Bar dataKey="revenue" fill="#1976D2" />
                   </BarChart>

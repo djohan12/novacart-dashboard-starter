@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import { getCustomers } from '../utils/api';
+import { getCustomers, getMinMaxDateRange} from '../utils/api';
 
 function formatCurrency(value) {
   if (!value) return '$0';
@@ -27,6 +27,8 @@ export default function CustomersView() {
   const [sortDir,    setSortDir]    = useState('desc');
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState(null);
+  const [minDate, setMinDate] = useState(null);
+  const [maxDate, setMaxDate] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -35,6 +37,10 @@ export default function CustomersView() {
     setError(null);
     try {
       const data = await getCustomers(startDate, endDate);
+      const dateRange = await getMinMaxDateRange();
+      setMinDate(dateRange["min_date"])
+      setMaxDate(dateRange["max_date"])
+
       setCustomers(data);
     } catch (err) {
       setError(err.message);

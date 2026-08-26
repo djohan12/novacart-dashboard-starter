@@ -17,11 +17,13 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import Navbar from '../components/Navbar';
-import { getSummary, getOrders, getCities } from '../utils/api';
+import { getSummary, getOrders, getCities, getMinMaxDateRange } from '../utils/api';
 
 export default function OrdersView() {
   const [startDate, setStartDate] = useState('2022-01-01');
   const [endDate,   setEndDate]   = useState('2022-12-31');
+  const [minDate, setMinDate] = useState(null);
+  const [maxDate, setMaxDate] = useState(null);
   const [summary,   setSummary]   = useState(null);
   const [orders,    setOrders]    = useState([]);
   const [cities,    setCities]    = useState([]);
@@ -39,6 +41,11 @@ export default function OrdersView() {
         getOrders(startDate, endDate),
         getCities(startDate, endDate),
       ]);
+
+      const dateRange = await getMinMaxDateRange();
+      setMinDate(dateRange["min_date"])
+      setMaxDate(dateRange["max_date"])
+      
       setSummary(s);
       setOrders(o);
       setCities(c);

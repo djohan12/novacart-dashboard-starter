@@ -303,13 +303,10 @@ def get_products(start: str = Query(..., description = "Start date in YYYY-MM-DD
       - GROUP BY product_id, name, category
       - ORDER BY revenue DESC, LIMIT 10
     """
-
-    if not start or not end:
-        raise HTTPException(status_code=400, detail="Missing start or end date")
-    if not is_valid_date(start) or not is_valid_date(end):
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
     if start > end:
         raise HTTPException(status_code=400, detail="Start date must be before end date")
+    elif not is_valid_date(start) or not is_valid_date(end):
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD with valid dates")
 
     try:
         conn = get_connection()

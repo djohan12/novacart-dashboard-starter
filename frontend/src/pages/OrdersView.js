@@ -85,15 +85,15 @@ export default function OrdersView() {
             <div className="stat-row">
               <div className="stat-box">
                 <div className="label">Total Revenue</div>
-                <div className="value">TODO</div>
+                <div className="value">${summary.total_revenue.toFixed(2)}</div>
               </div>
               <div className="stat-box">
                 <div className="label">Total Orders</div>
-                <div className="value">TODO</div>
+                <div className="value">{summary.total_orders}</div>
               </div>
               <div className="stat-box">
                 <div className="label">Unique Customers</div>
-                <div className="value">TODO</div>
+                <div className="value">{summary.unique_customers}</div>
               </div>
             </div>
 
@@ -106,6 +106,13 @@ export default function OrdersView() {
             <div className="card" style={{ marginBottom: 20 }}>
               <div className="section-title" style={{ marginBottom: 16 }}>Monthly Revenue</div>
               {/* TODO: add your chart here */}
+                <BarChart width={600} height={300} data={orders}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month_name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="revenue" fill="#8884d8" />   
+                </BarChart>
               <div className="loading" style={{ height: 200 }}>
                 Implement the monthly revenue chart using recharts BarChart
               </div>
@@ -121,6 +128,13 @@ export default function OrdersView() {
             <div className="card">
               <div className="section-title" style={{ marginBottom: 16 }}>Revenue by City</div>
               {/* TODO: add your chart here */}
+                <BarChart width={600} height={300} data={cities.slice(0, 10)} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis type="category" dataKey="city" />
+                  <Tooltip />
+                  <Bar dataKey="revenue" fill="#8884d8" />
+                </BarChart>
               <div className="loading" style={{ height: 200 }}>
                 Implement the cities chart using recharts BarChart with layout="vertical"
               </div>

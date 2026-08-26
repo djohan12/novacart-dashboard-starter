@@ -132,14 +132,6 @@ export default function CustomersView() {
                 ))}
               </tbody>
             </table>
-            
-            <div className="loading" style={{ height: 400 }}>
-              Implement the sortable customers table.
-              Data available in: sorted (array of customer objects)
-              Sorting state: sortBy="{sortBy}", sortDir="{sortDir}"
-              Use handleSort(column) to handle header clicks.
-            </div>
-
           </div>
         )}
       </div>

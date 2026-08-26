@@ -113,9 +113,6 @@ export default function OrdersView() {
                   <Tooltip />
                   <Bar dataKey="revenue" fill="#8884d8" />   
                 </BarChart>
-              <div className="loading" style={{ height: 200 }}>
-                Implement the monthly revenue chart using recharts BarChart
-              </div>
             </div>
 
             {/*
@@ -135,9 +132,6 @@ export default function OrdersView() {
                   <Tooltip />
                   <Bar dataKey="revenue" fill="#8884d8" />
                 </BarChart>
-              <div className="loading" style={{ height: 200 }}>
-                Implement the cities chart using recharts BarChart with layout="vertical"
-              </div>
             </div>
           </>
         )}

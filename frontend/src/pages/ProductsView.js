@@ -43,6 +43,18 @@ export default function ProductsView() {
       setMinDate(dateRange["min_date"])
       setMaxDate(dateRange["max_date"])
 
+      if (startDate > dateRange["max_date"] || endDate < dateRange["min_date"]) {
+        setError(
+          `Invalid date range. Please select dates between ${dateRange["min_date"]} and ${dateRange["max_date"]}.`
+        );
+        return;
+      }
+
+      if (startDate > endDate) {
+        setError("Start date must be before or equal to end date.");
+        return;
+      }
+
       setProducts(data);
     } catch (err) {
       setError(err.message);

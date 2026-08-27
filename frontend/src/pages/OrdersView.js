@@ -36,15 +36,28 @@ export default function OrdersView() {
     setLoading(true);
     setError(null);
     try {
+      const dateRange = await getMinMaxDateRange();
+      setMinDate(dateRange["min_date"])
+      setMaxDate(dateRange["max_date"])
+
+      if (startDate > dateRange["max_date"] || endDate < dateRange["min_date"]) {
+        setError(
+          `Invalid date range. Please select dates between ${dateRange["min_date"]} and ${dateRange["max_date"]}.`
+        );
+        return;
+      }
+
+      if (startDate > endDate) {
+        setError("Start date must be before or equal to end date.");
+        return;
+      }
+
       const [s, o, c] = await Promise.all([
         getSummary(),
         getOrders(startDate, endDate),
         getCities(startDate, endDate),
       ]);
 
-      const dateRange = await getMinMaxDateRange();
-      setMinDate(dateRange["min_date"])
-      setMaxDate(dateRange["max_date"])
       
       setSummary(s);
       setOrders(o);

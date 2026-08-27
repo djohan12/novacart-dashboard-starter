@@ -19,6 +19,14 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import Navbar from '../components/Navbar';
 import { getSummary, getOrders, getCities, getMinMaxDateRange } from '../utils/api';
 
+// Format currency helper
+function formatCurrency(value) {
+  if (!value) return '$0';
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000)    return `$${(value / 1000).toFixed(0)}K`;
+  return `$${value.toFixed(2)}`;
+}
+
 export default function OrdersView() {
   const [startDate, setStartDate] = useState('2022-01-01');
   const [endDate,   setEndDate]   = useState('2022-12-31');

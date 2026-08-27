@@ -134,7 +134,7 @@ export default function OrdersView() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month_name" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip formatter={(value) => formatCurrency(value)} />
                   <Bar dataKey="revenue" fill="#8884d8" />   
                 </BarChart>
             </div>
@@ -153,7 +153,7 @@ export default function OrdersView() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
                   <YAxis type="category" dataKey="city" />
-                  <Tooltip />
+                  <Tooltip formatter={(value) => formatCurrency(value)} />
                   <Bar dataKey="revenue" fill="#8884d8" />
                 </BarChart>
             </div>

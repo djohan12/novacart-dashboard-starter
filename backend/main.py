@@ -257,7 +257,7 @@ def get_orders(start: str = Query(..., description = "Start date in YYYY-MM-DD f
             SUM(amount) AS revenue
             FROM fact_orders 
             JOIN dim_date ON fact_orders.date_key = dim_date.date_key
-            WHERE fact_orders.order_date >= ? AND fact_orders.order_date <= ?
+            WHERE fact_orders.order_date >= %s AND fact_orders.order_date <= %s
                 AND fact_orders.status in ('shipped','delivered')
             GROUP BY dim_date.year, dim_date.month, dim_date.month_name
             ORDER BY dim_date.year, dim_date.month
@@ -277,8 +277,7 @@ def get_orders(start: str = Query(..., description = "Start date in YYYY-MM-DD f
         return orders
 
     except Exception as e:
-        #print("Error: {e}")
-        raise HTTPException(status_code= 500, detail="Internal Server Error")
+        raise HTTPException(status_code=500, detail=str(e))
 
     finally:
         conn.close()
@@ -318,7 +317,7 @@ def get_products(start: str = Query(..., description = "Start date in YYYY-MM-DD
             FROM fact_orders o
             JOIN dim_product p 
                 ON o.product_id = p.product_id
-            WHERE o.order_date >= ? AND o.order_date <= ? AND 
+            WHERE o.order_date >= %s AND o.order_date <= %s AND
             o.status IN ('delivered', 'shipped')
             GROUP BY p.product_id, p.name, p.category
             ORDER BY revenue DESC LIMIT 10
@@ -368,7 +367,7 @@ def get_customers(start: str = Query(..., description = "Start date in YYYY-MM-D
                     COUNT(DISTINCT o.order_id) AS total_orders, SUM(o.amount) AS total_spent
             FROM fact_orders o
             JOIN dim_customer c ON o.customer_id = c.customer_id
-            WHERE c.is_current = 1 AND o.order_date >= ? AND o.order_date <= ?
+            WHERE c.is_current = 1 AND o.order_date >= %s AND o.order_date <= %s
             GROUP BY c.customer_id, c.name, c.addr_city, c.addr_state
             ORDER BY total_spent DESC
             LIMIT 20              
@@ -421,8 +420,8 @@ def get_cities(start: str = Query(..., description = "Start date in YYYY-MM-DD f
             FROM fact_orders
             JOIN dim_customer ON dim_customer.customer_id = fact_orders.customer_id
             WHERE fact_orders.status IN ('shipped','delivered') 
-                AND fact_orders.order_date >= ? 
-                AND fact_orders.order_date <= ? 
+                AND fact_orders.order_date >= %s
+                AND fact_orders.order_date <= %s
                 AND dim_customer.is_current = 1
                 GROUP BY dim_customer.addr_city, dim_customer.addr_state
             ORDER BY revenue DESC         
@@ -439,7 +438,7 @@ def get_cities(start: str = Query(..., description = "Start date in YYYY-MM-DD f
         return cities 
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal Service Error")
+        raise HTTPException(status_code=500, detail=str(e))
     
     finally:
         conn.close()

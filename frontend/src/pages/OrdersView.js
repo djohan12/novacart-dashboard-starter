@@ -111,9 +111,9 @@ export default function OrdersView() {
               Hint: XAxis dataKey="month_name", Bar dataKey="revenue"
             */}
             <div className="card" style={{ marginBottom: 20 }}>
-              <div className="section-title" style={{ marginBottom: 16 }}>Monthly Revenue</div>
+              <div className="section-title" style={{ marginBottom: 16, fontSize: 20 }}>Monthly Revenue</div>
               {/* TODO: add your chart here */}
-                <BarChart width={1100} height={300} data={orders}>
+                <BarChart  width={1100} height={300} data={orders}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month_name" />
                   <YAxis />
@@ -130,9 +130,9 @@ export default function OrdersView() {
               Hint: .slice(0, 10) on cities array
             */}
             <div className="card">
-              <div className="section-title" style={{ marginBottom: 16 }}>Revenue by City</div>
+              <div className="section-title" style={{ marginBottom: 16, fontSize: 20 }}>Revenue by City</div>
               {/* TODO: add your chart here */}
-                <BarChart width={1100} height={600} data={cities.slice(0, 10)} layout="vertical">
+                <BarChart width={1100} height={600} data={cities.slice(0, 10)} layout="vertical"  margin={{ left: 30, right: 30, top: 10, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
                   <YAxis type="category" dataKey="city" />

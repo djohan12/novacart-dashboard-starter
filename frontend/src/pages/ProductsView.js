@@ -85,12 +85,12 @@ export default function ProductsView() {
             <div className="card">
               <div className="section-title" style={{ marginBottom: 16 }}>Top 10 Products by Revenue</div>
               {/* TODO: add your bar chart here */}
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={450}>
                   <BarChart layout="vertical" data={products}>
                     <XAxis type="number" />
                     <YAxis type="category" dataKey="name" width={200} tickFormatter={(value) => value.length > 25 ? value.substring(0, 20) + '...' : value}/>
                     <Tooltip formatter={(value) => formatCurrency(value)} />
-                    <Bar dataKey="revenue" fill="#1976D2" />
+                    <Bar dataKey="revenue" fill="#8884d8" />
                   </BarChart>
               </ResponsiveContainer>
             </div>
@@ -104,7 +104,7 @@ export default function ProductsView() {
             <div className="card">
               <div className="section-title" style={{ marginBottom: 16 }}>Product Details</div>
               {/* TODO: add your table here */}
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <table style={{width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid #ccc' }}>
                     <th style={{ textAlign: 'left', padding: 12, fontWeight: 600 }}>Name</th>

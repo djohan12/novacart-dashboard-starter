@@ -71,6 +71,23 @@ export default function CustomersView() {
   // Sort indicator helper
   const sortIcon = (col) => sortBy === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
 
+  const tableStyles = {
+    borderCollapse: 'collapse',
+    fontSize: '18px',
+  };  
+
+  const leftAlignStyles = {
+    textAlign: 'center',
+    paddingBottom: '12px',
+    paddingRight: '20px',
+  };
+
+  const tdStyles = {
+    padding: '12px 24px',  // Changed from 16px to 24px
+    borderBottom: '1px solid var(--border-color, #eee)',
+  };
+
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
       <Navbar />
@@ -97,7 +114,7 @@ export default function CustomersView() {
 
         {!loading && !error && (
           <div className="card">
-            <div className="section-title" style={{ marginBottom: 16 }}>
+            <div className="section-title" style={{ marginBottom: 16, fontSize: '20px'}}>
               Top Customers by Revenue
             </div>
 
@@ -118,22 +135,22 @@ export default function CustomersView() {
 
             <table>
               <thead>
-                <tr>
-                  <th onClick={() => handleSort('name')}>Name{sortIcon('name')}</th>
-                  <th onClick={() => handleSort('city')}>City{sortIcon('city')}</th>
-                  <th onClick={() => handleSort('state')}>State{sortIcon('state')}</th>
-                  <th onClick={() => handleSort('total_orders')}>Orders{sortIcon('total_orders')}</th>
-                  <th onClick={() => handleSort('total_spent')}>Total Spent{sortIcon('total_spent')}</th>
+                <tr style = {leftAlignStyles}>
+                  <th style = {tableStyles} onClick={() => handleSort('name')}>Name{sortIcon('name')}</th>
+                  <th style = {tableStyles} onClick={() => handleSort('city')}>City{sortIcon('city')}</th>
+                  <th style = {tableStyles} onClick={() => handleSort('state')}>State{sortIcon('state')}</th>
+                  <th style = {tableStyles} onClick={() => handleSort('total_orders')}>Orders{sortIcon('total_orders')}</th>
+                  <th style = {tableStyles} onClick={() => handleSort('total_spent')}>Total Spent{sortIcon('total_spent')}</th>
                 </tr>
               </thead>
               <tbody>
                 {sorted.map((customer, index) => (
                   <tr key={customer.customer_id} style={{ backgroundColor: index % 2 === 0 ? 'var(--bg-secondary)' : 'var(--bg-primary)' }}>
-                    <td>{customer.name}</td>
-                    <td>{customer.city}</td>
-                    <td>{customer.state}</td>
-                    <td>{customer.total_orders}</td>
-                    <td>{formatCurrency(customer.total_spent)}</td>
+                    <td style = {tdStyles}>{customer.name}</td>
+                    <td style = {tdStyles}>{customer.city}</td>
+                    <td style = {tdStyles}>{customer.state}</td>
+                    <td style = {tdStyles}>{customer.total_orders}</td>
+                    <td style = {tdStyles}>{formatCurrency(customer.total_spent)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -55,7 +55,12 @@ export default function CustomersView() {
 
       setCustomers(data);
     } catch (err) {
-      setError(err.message);
+      if (err.message.includes('Failed to fetch') || err.message.includes('Load failed') ) {
+        setError("The backend server is down. Please try again later.");
+      } else {
+        setError(err.message);
+      }
+      
     } finally {
       setLoading(false);
     }
